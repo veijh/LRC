@@ -23,14 +23,18 @@ lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_exti.h
 lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h
 lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma_ex.h
 lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_cortex.h
+lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_adc.h
+lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_adc_ex.h
 lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_can.h
 lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash.h
 lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ex.h
 lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h
 lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h
 lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h
+lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h
 lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h
 lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h
+lrc\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h
 lrc\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h
 lrc\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
 lrc\main.o: ../Inc/FreeRTOSConfig.h
@@ -49,4 +53,8 @@ lrc\main.o: D:\Install\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
 lrc\main.o: D:\Install\Keil_v5\ARM\ARMCC\Bin\..\include\stdarg.h
 lrc\main.o: D:\Install\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 lrc\main.o: D:\Install\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+lrc\main.o: ..\User\usart.h
+lrc\main.o: D:\Install\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+lrc\main.o: ..\User\gps.h
+lrc\main.o: ..\User\bsp_imu.h
 lrc\main.o: ..\User\pid.h

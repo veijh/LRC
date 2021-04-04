@@ -50,6 +50,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -58,10 +60,28 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define T2DEBUG_Pin GPIO_PIN_1
+#define T2DEBUG_GPIO_Port GPIOE
+#define R2DEBUG_Pin GPIO_PIN_0
+#define R2DEBUG_GPIO_Port GPIOE
+#define HEAT_PWM_Pin GPIO_PIN_5
+#define HEAT_PWM_GPIO_Port GPIOB
+#define T2GPS_Pin GPIO_PIN_14
+#define T2GPS_GPIO_Port GPIOG
+#define R2GPS_Pin GPIO_PIN_9
+#define R2GPS_GPIO_Port GPIOG
 #define J20_Pin GPIO_PIN_2
 #define J20_GPIO_Port GPIOH
+#define J22_Pin GPIO_PIN_3
+#define J22_GPIO_Port GPIOH
 #define J19_Pin GPIO_PIN_4
 #define J19_GPIO_Port GPIOH
+#define J21_Pin GPIO_PIN_5
+#define J21_GPIO_Port GPIOH
+#define R2HOST_Pin GPIO_PIN_9
+#define R2HOST_GPIO_Port GPIOD
+#define T2HOST_Pin GPIO_PIN_8
+#define T2HOST_GPIO_Port GPIOD
 /* USER CODE BEGIN Private defines */
 #define FREERTOS
 /* USER CODE END Private defines */

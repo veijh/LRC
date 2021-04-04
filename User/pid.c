@@ -199,7 +199,7 @@ void PID_struct_init(
 //pid_t pid_chassis_angle={0};
 //pid_t pid_poke = {0};
 //pid_t pid_poke_omg = {0};
-//pid_t pid_imu_tmp;
+pid_t pid_imu_tmp;
 //pid_t pid_x;
 //pid_t pid_cali_bby;
 //pid_t pid_cali_bbp;
@@ -207,8 +207,7 @@ void PID_struct_init(
 pid_t pid_omg;
 pid_t pid_pos;
 pid_t pid_spd[4];
-
-
+\
 void pid_test_init(){
 	
 
