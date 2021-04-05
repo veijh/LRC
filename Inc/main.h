@@ -78,6 +78,8 @@ void Error_Handler(void);
 #define J19_GPIO_Port GPIOH
 #define J21_Pin GPIO_PIN_5
 #define J21_GPIO_Port GPIOH
+#define HEAT_Pin GPIO_PIN_12
+#define HEAT_GPIO_Port GPIOD
 #define R2HOST_Pin GPIO_PIN_9
 #define R2HOST_GPIO_Port GPIOD
 #define T2HOST_Pin GPIO_PIN_8

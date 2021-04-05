@@ -10,4 +10,5 @@ typedef struct
 }Chassis_Motion;
 uint8_t host_data_save(uint8_t host_order_type, uint8_t Res);
 uint8_t typeA_data(uint8_t Res);
+extern Chassis_Motion chassis_motion;
 #endif

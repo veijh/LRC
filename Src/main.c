@@ -28,6 +28,7 @@
 #include "bsp_imu.h"
 #include "pid.h"
 #include "gps.h"
+#include "protocol.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,41 +64,48 @@ UART_HandleTypeDef huart6;
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityLow,
   .stack_size = 128 * 4
 };
 /* Definitions for myGetGPS */
 osThreadId_t myGetGPSHandle;
 const osThreadAttr_t myGetGPS_attributes = {
   .name = "myGetGPS",
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityAboveNormal,
   .stack_size = 128 * 4
 };
 /* Definitions for myMotorControl */
 osThreadId_t myMotorControlHandle;
 const osThreadAttr_t myMotorControl_attributes = {
   .name = "myMotorControl",
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
 /* Definitions for myGetIMU */
 osThreadId_t myGetIMUHandle;
 const osThreadAttr_t myGetIMU_attributes = {
   .name = "myGetIMU",
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityAboveNormal,
   .stack_size = 128 * 4
 };
 /* Definitions for myCtrlIMUTemp */
 osThreadId_t myCtrlIMUTempHandle;
 const osThreadAttr_t myCtrlIMUTemp_attributes = {
   .name = "myCtrlIMUTemp",
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
 /* Definitions for myChassisCtrl */
 osThreadId_t myChassisCtrlHandle;
 const osThreadAttr_t myChassisCtrl_attributes = {
   .name = "myChassisCtrl",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
+/* Definitions for myBrushCtrl */
+osThreadId_t myBrushCtrlHandle;
+const osThreadAttr_t myBrushCtrl_attributes = {
+  .name = "myBrushCtrl",
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
@@ -124,6 +132,7 @@ void StartMotorControl(void *argument);
 void StartGetIMU(void *argument);
 void StartCtrlIMUTemp(void *argument);
 void StartChassisCtrl(void *argument);
+void StartBrushCtrl(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -213,6 +222,9 @@ int main(void)
 
   /* creation of myChassisCtrl */
   myChassisCtrlHandle = osThreadNew(StartChassisCtrl, NULL, &myChassisCtrl_attributes);
+
+  /* creation of myBrushCtrl */
+  myBrushCtrlHandle = osThreadNew(StartBrushCtrl, NULL, &myBrushCtrl_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -757,39 +769,39 @@ void StartGetGPS(void *argument)
 * @retval None
 */
 #define Pi 3.1415926f
-#define L 43.6f + 36.5f //	Length/2 + Width/2
-#define R 60.0f
+#define L (43.6f + 36.5f) //	Length/2 + Width/2
+#define R 6.0f	// 轮子半径 cm
 #define RATIO 19	// 3508_ratio = 19
 float vx = 0.0f, vy = 0.0f, omega = 0.0f; // cm/s rad/s
 moto_measure_t moto_chassis[4] = {0};// 4 chassis moto
-moto_measure_t moto_brush[2] = {0};
 moto_measure_t moto_info;
-int set_spd[4] = {19*0, 19*0, 19*0, 19*0};
+float set_wheel_spd[4] = {0, 0, 0, 0};	//LF RF RB LB
 /* USER CODE END Header_StartMotorControl */
 void StartMotorControl(void *argument)
 {
   /* USER CODE BEGIN StartMotorControl */
   for(int i=0; i<4; i++)
   {
-	PID_struct_init(&pid_spd[i], POSITION_PID, 20000, 20000,
+	PID_struct_init(&pid_wheel_spd[i], POSITION_PID, 20000, 20000,
 								1.5f,	0.1f,	0.0f	);  //4 motos angular rate closeloop.
   } 
   /* Infinite loop */
   for(;;)
   {
-	set_spd[0] = ((-vx	-vy	-omega*L)/R * (30/Pi)) * RATIO;
-	set_spd[1] = ((-vx	+vy	-omega*L)/R * (30/Pi)) * RATIO;
-	set_spd[2] = ((+vx	-vy	-omega*L)/R * (30/Pi)) * RATIO;
-	set_spd[3] = ((+vx	+vy	-omega*L)/R * (30/Pi)) * RATIO;
+	set_wheel_spd[0] = ((+vx	+vy	+omega*L)/R * (30/Pi)) * RATIO;
+	set_wheel_spd[1] = ((-vx	+vy	+omega*L)/R * (30/Pi)) * RATIO;
+	set_wheel_spd[2] = ((-vx	-vy	+omega*L)/R * (30/Pi)) * RATIO;
+	set_wheel_spd[3] = ((+vx	-vy	+omega*L)/R * (30/Pi)) * RATIO;
 	for(int i=0; i<4; i++)
 	{
-		pid_calc(&pid_spd[i], moto_chassis[i].speed_rpm, set_spd[i]);
+		//注意，将来需要在电机确认上线后，才能PID调速
+		pid_calc(&pid_wheel_spd[i], moto_chassis[i].speed_rpm, set_wheel_spd[i]);
 	}
 	set_moto_1to4_current(my_hcan1->hcan, 
-						  pid_spd[0].pos_out, 
-						  pid_spd[1].pos_out,
-						  pid_spd[2].pos_out,
-						  pid_spd[3].pos_out);
+						  pid_wheel_spd[0].pos_out, 
+						  pid_wheel_spd[1].pos_out,
+						  pid_wheel_spd[2].pos_out,
+						  pid_wheel_spd[3].pos_out);
 	osDelay(10);
   }
   /* USER CODE END StartMotorControl */
@@ -831,36 +843,7 @@ void StartCtrlIMUTemp(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  vx = 20.0f; vy = 0.0f; omega = 0.0f;
-    osDelay(1000);
-	  vx = 0.0f; vy = 0.0f; omega = 0.0f;
-	osDelay(1000);
-	
-	  vx = -20.0f; vy = 0.0f; omega = 0.0f;
-    osDelay(1000);
-	  vx = 0.0f; vy = 0.0f; omega = 0.0f;
-	osDelay(1000);
-	 
-	  vx = 0.0f; vy = -20.0f; omega = 0.0f;
-    osDelay(1000);
-	  vx = 0.0f; vy = 0.0f; omega = 0.0f;
-	osDelay(1000);
-	  
-	  vx = 0.0f; vy = 20.0f; omega = 0.0f;
-    osDelay(1000);
-	  vx = 0.0f; vy = 0.0f; omega = 0.0f;
-	osDelay(1000);
-	  
-	  vx = 10.0f; vy = 20.0f; omega = 0.0f;
-    osDelay(1000);
-	  vx = 0.0f; vy = 0.0f; omega = 0.0f;
-	osDelay(1000);
-	
-	  vx = 10.0f; vy = -20.0f; omega = 0.0f;
-    osDelay(1000);
-	  vx = 0.0f; vy = 0.0f; omega = 0.0f;
-	osDelay(1000);
-	  
+	osDelay(1);
   }
   /* USER CODE END StartCtrlIMUTemp */
 }
@@ -871,6 +854,7 @@ void StartCtrlIMUTemp(void *argument)
 * @param argument: Not used
 * @retval None
 */
+extern Chassis_Motion chassis_motion;
 /* USER CODE END Header_StartChassisCtrl */
 void StartChassisCtrl(void *argument)
 {
@@ -878,9 +862,46 @@ void StartChassisCtrl(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
-  }
+	vx = chassis_motion.vx;
+	vy = chassis_motion.vy;
+	omega = chassis_motion.omega;
+	osDelay(10);
+	}
   /* USER CODE END StartChassisCtrl */
+}
+
+/* USER CODE BEGIN Header_StartBrushCtrl */
+/**
+* @brief Function implementing the myBrushCtrl thread.
+* @param argument: Not used
+* @retval None
+*/
+moto_measure_t moto_brush[2] = {0};
+float set_brush_spd[2] = {19*0, 19*0};
+/* USER CODE END Header_StartBrushCtrl */
+void StartBrushCtrl(void *argument)
+{
+  /* USER CODE BEGIN StartBrushCtrl */
+  for(int i=0; i<2; i++)
+  {
+	PID_struct_init(&pid_brush_spd[i], POSITION_PID, 20000, 20000,
+								1.5f,	0.1f,	0.0f	);  //4 motos angular rate closeloop.
+  } 
+  /* Infinite loop */
+  for(;;)
+  {
+	for(int i=0; i<2; i++)
+	{
+		pid_calc(&pid_brush_spd[i], moto_brush[i].speed_rpm, set_brush_spd[i]);
+	}
+//	set_moto_5to8_current(my_hcan1->hcan, 
+//						  pid_brush_spd[0].pos_out, 
+//						  pid_brush_spd[1].pos_out,
+//						  0,
+//						  0);
+	osDelay(10);
+  }
+  /* USER CODE END StartBrushCtrl */
 }
 
  /**

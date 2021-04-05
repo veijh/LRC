@@ -31,7 +31,7 @@ void bsp_init(void)
 	
 	//IMU
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);//启动加热
-	__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,0);
+	__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,10);
 	mpu_device_init();
 	init_quaternion();		
 	

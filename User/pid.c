@@ -206,11 +206,11 @@ pid_t pid_imu_tmp;
 
 pid_t pid_omg;
 pid_t pid_pos;
-pid_t pid_spd[4];
+pid_t pid_wheel_spd[4];
+pid_t pid_brush_spd[2];
 \
 void pid_test_init(){
 	
-
 	//为了解决上位机调参的时候第一次赋值的时候清零其他参数， 应该提前把参数表填充一下！
 
 }

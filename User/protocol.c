@@ -18,7 +18,7 @@ uint8_t host_data_save(uint8_t host_order_type, uint8_t Res)
 uint8_t uint2float[4];	//uint8转float
 uint8_t typeA_count = 0;	//收到的字节个数
 uint8_t typeA_num = 0;	//状态编号
-Chassis_Motion chassis_motion;
+Chassis_Motion chassis_motion = {0};
 float typeA_float = 0;
 uint8_t typeA_data(uint8_t Res)
 {
