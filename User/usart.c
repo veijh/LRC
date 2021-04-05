@@ -1,6 +1,8 @@
 #include "usart.h"	
 char rxdatabufer;
 uint16_t point1 = 0;
+uint8_t host_rx_state = 0;
+uint8_t host_order_type = 0;
 
 //重定义fputc函数, uart8作为DEBUG口
 int fputc(int ch, FILE *f)
@@ -26,7 +28,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)           	//串口1中�
 #ifdef FREERTOS
 	xHigherPriorityTaskWoken = pdFALSE;
 #endif
-	uint8_t Res;
+	uint8_t Res = 0;
 	if(huart == &huart6) 
 	{
 		Res = GpsTempChar;
@@ -54,9 +56,47 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)           	//串口1中�
 			point1 = USART_REC_LEN;
 		}		
    }
-	if(huart == &huart3)
+	if(huart == &huart7)
 	{
-		Char = 
+		Res = HostTempChar;
+		uint8_t data_processing = 0;
+		switch(host_rx_state)
+		{
+			case 0:
+				if(Res == 0xFF)
+				{
+					host_rx_state = 1;
+				}
+				else
+				{
+					host_rx_state = 0;
+				}
+				break;
+			case 1:
+				host_order_type = Res;
+				if(host_order_type == 1 || host_order_type == 2)
+				{
+					host_rx_state = 2;
+				}
+				else
+				{
+					host_rx_state = 0;
+				}
+				break;
+			case 2:
+				data_processing = host_data_save(host_order_type, Res);
+				if(data_processing == 0)
+				{
+					host_rx_state = 0;
+				}
+				else
+				{
+					host_rx_state = 2;
+				}
+				break;
+			default :
+				break;
+		}
 	}
 #ifdef FREERTOS
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);

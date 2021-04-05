@@ -67,7 +67,7 @@ typedef struct
 } imu_t;
 
 extern mpu_data_t mpu_data;
-extern imu_t      imu;
+extern imu_t imu;
 extern SPI_HandleTypeDef hspi5;
 
 uint8_t   mpu_device_init(void);

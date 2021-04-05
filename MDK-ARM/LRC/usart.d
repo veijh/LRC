@@ -46,3 +46,4 @@ lrc\usart.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
 lrc\usart.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
 lrc\usart.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/portmacro.h
 lrc\usart.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+lrc\usart.o: ..\User\protocol.h

@@ -23,14 +23,15 @@ void bsp_init(void)
 	__HAL_UART_ENABLE_IT(&huart6, UART_IT_RXNE);	//GPS
     HAL_UART_Receive_IT(&huart6, &GpsTempChar, 1);
 	
-	__HAL_UART_ENABLE_IT(&huart8, UART_IT_RXNE);	//HOST
-    HAL_UART_Receive_IT(&huart8, &HostTempChar, 1);
+	__HAL_UART_ENABLE_IT(&huart7, UART_IT_RXNE);	//HOST
+    HAL_UART_Receive_IT(&huart7, &HostTempChar, 1);
 	
 	//GPS
 	clrStruct();
 	
 	//IMU
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);//启动加热
+	__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,0);
 	mpu_device_init();
 	init_quaternion();		
 	

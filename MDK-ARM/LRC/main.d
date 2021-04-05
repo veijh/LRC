@@ -56,5 +56,6 @@ lrc\main.o: D:\Install\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
 lrc\main.o: ..\User\usart.h
 lrc\main.o: D:\Install\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 lrc\main.o: ..\User\gps.h
+lrc\main.o: ..\User\protocol.h
 lrc\main.o: ..\User\bsp_imu.h
 lrc\main.o: ..\User\pid.h

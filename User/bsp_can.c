@@ -132,6 +132,15 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)//CAN Receive
 				//get_moto_measure(&moto_chassis[i], _hcan);
 			}
 			break;
+			case CAN_3510Moto5_ID:
+			case CAN_3510Moto6_ID:
+			{
+				static u8 j;
+				j = my_hcan1->pRxMsg->StdId - CAN_3510Moto5_ID;
+				moto_brush[j].msg_cnt++ <= 50	?	get_moto_offset(&moto_brush[j], my_hcan1) : get_moto_measure(&moto_brush[j], my_hcan1);
+				get_moto_measure(&moto_info, my_hcan1);
+			}
+			break;
 		}
 	}
 }
@@ -199,8 +208,8 @@ void get_total_angle(moto_measure_t *p){
 	p->last_angle = p->angle;
 }
 
-void set_moto_current(CAN_HandleTypeDef* hcan, s16 iq1, s16 iq2, s16 iq3, s16 iq4){
-
+void set_moto_1to4_current(CAN_HandleTypeDef* hcan, s16 iq1, s16 iq2, s16 iq3, s16 iq4)
+{
 	if(hcan == my_hcan1->hcan)
 	{
 		my_hcan1->pTxMsg->StdId = 0x200;
@@ -221,4 +230,29 @@ void set_moto_current(CAN_HandleTypeDef* hcan, s16 iq1, s16 iq2, s16 iq3, s16 iq
 		HAL_CAN_AddTxMessage(my_hcan1->hcan, my_hcan1->pTxMsg, my_hcan1->TxData, &my_hcan1->TxMailbox);
 	}
 }
+
+void set_moto_5to8_current(CAN_HandleTypeDef* hcan, s16 iq1, s16 iq2, s16 iq3, s16 iq4)
+{
+	if(hcan == my_hcan1->hcan)
+	{
+		my_hcan1->pTxMsg->StdId = 0x1FF;
+		my_hcan1->pTxMsg->IDE = CAN_ID_STD;
+		my_hcan1->pTxMsg->RTR = CAN_RTR_DATA;
+		my_hcan1->pTxMsg->DLC = 0x08;
+		my_hcan1->pTxMsg->TransmitGlobalTime = DISABLE;
+		
+		my_hcan1->TxData[0] = iq1 >> 8;
+		my_hcan1->TxData[1] = iq1;
+		my_hcan1->TxData[2] = iq2 >> 8;
+		my_hcan1->TxData[3] = iq2;
+		my_hcan1->TxData[4] = iq3 >> 8;
+		my_hcan1->TxData[5] = iq3;
+		my_hcan1->TxData[6] = iq4 >> 8;
+		my_hcan1->TxData[7] = iq4;
+		
+		HAL_CAN_AddTxMessage(my_hcan1->hcan, my_hcan1->pTxMsg, my_hcan1->TxData, &my_hcan1->TxMailbox);
+	}
+}
+
+
 

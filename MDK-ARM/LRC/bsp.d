@@ -52,4 +52,5 @@ lrc\bsp.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
 lrc\bsp.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
 lrc\bsp.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/portmacro.h
 lrc\bsp.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+lrc\bsp.o: ..\User\protocol.h
 lrc\bsp.o: ..\User\bsp_imu.h

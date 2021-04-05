@@ -18,6 +18,7 @@
 extern char  USART_RX_BUF[USART_REC_LEN]; //接收缓冲,最大USART_REC_LEN个字节.末字节为换行符 
 extern uint16_t USART_RX_STA;         		//接收状态标记	
 extern UART_HandleTypeDef huart8;
+extern UART_HandleTypeDef huart7;
 extern UART_HandleTypeDef huart6;
 extern UART_HandleTypeDef huart3;
 

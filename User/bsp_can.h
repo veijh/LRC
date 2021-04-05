@@ -62,6 +62,11 @@ typedef enum
 	CAN_3510Moto2_ID = 0x202,
 	CAN_3510Moto3_ID = 0x203,
 	CAN_3510Moto4_ID = 0x204,
+	CAN_3510Moto5_ID = 0x205,
+	CAN_3510Moto6_ID = 0x206,
+	CAN_3510Moto7_ID = 0x207,
+	CAN_3510Moto8_ID = 0x208,
+
 	CAN_DriverPower_ID = 0x80,
 	
 	
@@ -100,6 +105,7 @@ typedef struct{
 
 /* Extern  ------------------------------------------------------------------*/
 extern moto_measure_t  moto_chassis[];
+extern moto_measure_t  moto_brush[];
 extern moto_measure_t  moto_yaw,moto_pit,moto_poke,moto_info;
 extern float real_current_from_judgesys; //unit :mA
 extern float dynamic_limit_current;	//unit :mA,;	//from judge_sys
@@ -113,5 +119,6 @@ void can_filter_recv_special(CAN_HandleTypeDef* hcan, uint8_t filter_number, uin
 void get_moto_measure(moto_measure_t *ptr, My_CAN_HandleTypeDef *hcan);
 void get_moto_offset(moto_measure_t *ptr, My_CAN_HandleTypeDef *hcan);
 void can_receive_onetime(CAN_HandleTypeDef* _hcan, int time);
-void set_moto_current(CAN_HandleTypeDef* hcan, s16 iq1, s16 iq2, s16 iq3, s16 iq4);
+void set_moto_1to4_current(CAN_HandleTypeDef* hcan, s16 iq1, s16 iq2, s16 iq3, s16 iq4);
+void set_moto_5to8_current(CAN_HandleTypeDef* hcan, s16 iq1, s16 iq2, s16 iq3, s16 iq4);
 #endif

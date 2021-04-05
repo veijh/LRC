@@ -43,6 +43,7 @@
 "lrc\usart.o"
 "lrc\bsp_imu.o"
 "lrc\myiic.o"
+"lrc\protocol.o"
 --library_type=microlib --strict --scatter "LRC\LRC.sct"
 --summary_stderr --info summarysizes --map --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers
