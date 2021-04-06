@@ -877,7 +877,8 @@ void StartChassisCtrl(void *argument)
 * @retval None
 */
 moto_measure_t moto_brush[2] = {0};
-float set_brush_spd[2] = {19*0, 19*0};
+float set_brush_spd[2] = {0.0f, 0.0f};
+extern float brush_spd_from_host;
 /* USER CODE END Header_StartBrushCtrl */
 void StartBrushCtrl(void *argument)
 {
@@ -892,13 +893,14 @@ void StartBrushCtrl(void *argument)
   {
 	for(int i=0; i<2; i++)
 	{
+		set_brush_spd[i] = brush_spd_from_host;
 		pid_calc(&pid_brush_spd[i], moto_brush[i].speed_rpm, set_brush_spd[i]);
 	}
-//	set_moto_5to8_current(my_hcan1->hcan, 
-//						  pid_brush_spd[0].pos_out, 
-//						  pid_brush_spd[1].pos_out,
-//						  0,
-//						  0);
+	set_moto_5to8_current(my_hcan1->hcan, 
+						  pid_brush_spd[0].pos_out, 
+						  pid_brush_spd[1].pos_out,
+						  0,
+						  0);
 	osDelay(10);
   }
   /* USER CODE END StartBrushCtrl */
