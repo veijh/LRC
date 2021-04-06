@@ -5,7 +5,7 @@ uint8_t GpsTempChar;
 uint8_t HostTempChar;
 void bsp_init(void)
 {
-	HAL_Delay(1500);
+	HAL_Delay(3500);
 	//CAN
 	#ifdef FREERTOS
 	my_hcan1 = (My_CAN_HandleTypeDef *)pvPortMalloc(sizeof(My_CAN_HandleTypeDef));
@@ -31,10 +31,11 @@ void bsp_init(void)
 	
 	//IMU
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);//启动加热
-	__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,10);
+	__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,100);
 	mpu_device_init();
-	init_quaternion();		
+	init_quaternion();
 	
+	//风机
 	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
 	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1,199);
 }

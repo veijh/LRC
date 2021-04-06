@@ -784,7 +784,7 @@ void StartMotorControl(void *argument)
   {
 	PID_struct_init(&pid_wheel_spd[i], POSITION_PID, 20000, 20000,
 								1.5f,	0.1f,	0.0f	);  //4 motos angular rate closeloop.
-  } 
+  }
   /* Infinite loop */
   for(;;)
   {
@@ -813,17 +813,30 @@ void StartMotorControl(void *argument)
 * @param argument: Not used
 * @retval None
 */
+extern float set_imu_temp;
 extern imu_t imu;
 /* USER CODE END Header_StartGetIMU */
 void StartGetIMU(void *argument)
 {
   /* USER CODE BEGIN StartGetIMU */
+	int count = 0, init_temp_flag = 0;
   /* Infinite loop */
   for(;;)
   {
 	mpu_get_data();
 	imu_ahrs_update();
-	imu_attitude_update(); 
+	imu_attitude_update();
+	
+	//获取温度
+	if(init_temp_flag == 0)	
+	{
+		count++;
+		if(count >= 100)
+		{
+			set_imu_temp = imu.temp + 10;
+			init_temp_flag = 1;
+		}
+	}
 
     osDelay(5);
   }
@@ -836,14 +849,24 @@ void StartGetIMU(void *argument)
 * @param argument: Not used
 * @retval None
 */
+extern pid_t pid_imu_tmp;
+float set_imu_temp = 0.0f;
+int imu_temp_ctrl = 0;
 /* USER CODE END Header_StartCtrlIMUTemp */
 void StartCtrlIMUTemp(void *argument)
 {
   /* USER CODE BEGIN StartCtrlIMUTemp */
+  PID_struct_init(&pid_imu_tmp, POSITION_PID, 4500, 4500,
+								300.0f,	10.0f, 0.0f	);  //4 motos angular rate closeloop.
   /* Infinite loop */
   for(;;)
   {
-	osDelay(1);
+	if(imu_temp_ctrl)
+	{
+		pid_calc(&pid_imu_tmp, imu.temp, set_imu_temp);
+		__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, pid_imu_tmp.pos_out);
+	}
+	osDelay(5);
   }
   /* USER CODE END StartCtrlIMUTemp */
 }

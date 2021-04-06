@@ -90,6 +90,8 @@ extern pid_t pid_pit_omg;
 extern pid_t pid_yaw_omg;	
 extern pid_t pid_wheel_spd[4];
 extern pid_t pid_brush_spd[2];
+extern pid_t pid_wheel_current[4];
+extern pid_t pid_brush_current[2];
 extern pid_t pid_yaw_alfa;
 extern pid_t pid_chassis_angle;
 extern pid_t pid_poke;
