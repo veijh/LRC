@@ -3,6 +3,7 @@ My_CAN_HandleTypeDef *my_hcan1;
 GPS_Data save_data;
 uint8_t GpsTempChar;
 uint8_t HostTempChar;
+uint8_t DebugTempChar;
 void bsp_init(void)
 {
 	HAL_Delay(3500);
@@ -26,18 +27,24 @@ void bsp_init(void)
 	__HAL_UART_ENABLE_IT(&huart7, UART_IT_RXNE);	//HOST
     HAL_UART_Receive_IT(&huart7, &HostTempChar, 1);
 	
+	__HAL_UART_ENABLE_IT(&huart8, UART_IT_RXNE);	//DEBUG
+    HAL_UART_Receive_IT(&huart8, &DebugTempChar, 1);
+	
 	//GPS
 	clrStruct();
 	
 	//IMU
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);//启动加热
-	__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,100);
+	__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,0);
 	mpu_device_init();
 	init_quaternion();
 	
 	//风机
 	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
-	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1,199);
+	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1,0);
+	
+	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,0);
 }
 
 float get_temprate(void)

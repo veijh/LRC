@@ -28,7 +28,9 @@
 #include "bsp_imu.h"
 #include "pid.h"
 #include "gps.h"
+#include "usart.h"
 #include "protocol.h"
+#include "math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -109,6 +111,27 @@ const osThreadAttr_t myBrushCtrl_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 128 * 4
 };
+/* Definitions for myLED */
+osThreadId_t myLEDHandle;
+const osThreadAttr_t myLED_attributes = {
+  .name = "myLED",
+  .priority = (osPriority_t) osPriorityBelowNormal,
+  .stack_size = 128 * 4
+};
+/* Definitions for myMtHrtBt */
+osThreadId_t myMtHrtBtHandle;
+const osThreadAttr_t myMtHrtBt_attributes = {
+  .name = "myMtHrtBt",
+  .priority = (osPriority_t) osPriorityBelowNormal,
+  .stack_size = 128 * 4
+};
+/* Definitions for myFanCtrl */
+osThreadId_t myFanCtrlHandle;
+const osThreadAttr_t myFanCtrl_attributes = {
+  .name = "myFanCtrl",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
 /* USER CODE BEGIN PV */
 extern My_CAN_HandleTypeDef *my_hcan1;
 
@@ -133,6 +156,9 @@ void StartGetIMU(void *argument);
 void StartCtrlIMUTemp(void *argument);
 void StartChassisCtrl(void *argument);
 void StartBrushCtrl(void *argument);
+void StartLED(void *argument);
+void StartMtHrtBt(void *argument);
+void StartFanCtrl(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -225,6 +251,15 @@ int main(void)
 
   /* creation of myBrushCtrl */
   myBrushCtrlHandle = osThreadNew(StartBrushCtrl, NULL, &myBrushCtrl_attributes);
+
+  /* creation of myLED */
+  myLEDHandle = osThreadNew(StartLED, NULL, &myLED_attributes);
+
+  /* creation of myMtHrtBt */
+  myMtHrtBtHandle = osThreadNew(StartMtHrtBt, NULL, &myMtHrtBt_attributes);
+
+  /* creation of myFanCtrl */
+  myFanCtrlHandle = osThreadNew(StartFanCtrl, NULL, &myFanCtrl_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -530,6 +565,10 @@ static void MX_TIM4_Init(void)
   {
     Error_Handler();
   }
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN TIM4_Init 2 */
 
   /* USER CODE END TIM4_Init 2 */
@@ -688,20 +727,24 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOF_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(HEAT_GPIO_Port, HEAT_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOH, J20_Pin|J22_Pin|J19_Pin|J21_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOF, GPIO_PIN_6, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOG, LED8_Pin|LED7_Pin|LED6_Pin|LED5_Pin
+                          |LED4_Pin|LED3_Pin|LED2_Pin|LED1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PB4 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : HEAT_Pin */
+  GPIO_InitStruct.Pin = HEAT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(HEAT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : J20_Pin J22_Pin J19_Pin J21_Pin */
   GPIO_InitStruct.Pin = J20_Pin|J22_Pin|J19_Pin|J21_Pin;
@@ -710,12 +753,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PF6 */
-  GPIO_InitStruct.Pin = GPIO_PIN_6;
+  /*Configure GPIO pins : LED8_Pin LED7_Pin LED6_Pin LED5_Pin
+                           LED4_Pin LED3_Pin LED2_Pin LED1_Pin */
+  GPIO_InitStruct.Pin = LED8_Pin|LED7_Pin|LED6_Pin|LED5_Pin
+                          |LED4_Pin|LED3_Pin|LED2_Pin|LED1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : NSS_Pin */
+  GPIO_InitStruct.Pin = NSS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(NSS_GPIO_Port, &GPIO_InitStruct);
 
 }
 
@@ -756,8 +808,8 @@ void StartGetGPS(void *argument)
   for(;;)
   {
 	parseGpsBuffer();
-	printGpsBuffer();
-    osDelay(1000);
+	//printGpsBuffer();
+    osDelay(100);
   }
   /* USER CODE END StartGetGPS */
 }
@@ -772,30 +824,50 @@ void StartGetGPS(void *argument)
 #define L (43.6f + 36.5f) //	Length/2 + Width/2
 #define R 6.0f	// 轮子半径 cm
 #define RATIO 19	// 3508_ratio = 19
+#define WHEEL_KP 2.0f
+#define WHEEL_KI 0.075f
+#define WHEEL_KD 0.0f
+#define WHEEL_DV 45.6f
 float vx = 0.0f, vy = 0.0f, omega = 0.0f; // cm/s rad/s
 moto_measure_t moto_chassis[4] = {0};// 4 chassis moto
-moto_measure_t moto_info;
 float set_wheel_spd[4] = {0, 0, 0, 0};	//LF RF RB LB
+float rt_wheel_spd[4] = {0, 0, 0,0};
 /* USER CODE END Header_StartMotorControl */
 void StartMotorControl(void *argument)
 {
   /* USER CODE BEGIN StartMotorControl */
   for(int i=0; i<4; i++)
   {
-	PID_struct_init(&pid_wheel_spd[i], POSITION_PID, 20000, 20000,
-								1.5f,	0.1f,	0.0f	);  //4 motos angular rate closeloop.
+	PID_struct_init(&pid_wheel_spd[i], POSITION_PID, 16000, 16000,
+								WHEEL_KP,	WHEEL_KI,	WHEEL_KD	);  //4 motos angular rate closeloop.
   }
   /* Infinite loop */
   for(;;)
   {
+	//主机掉线在chassis_ctrl任务中处理
 	set_wheel_spd[0] = ((+vx	+vy	+omega*L)/R * (30/Pi)) * RATIO;
 	set_wheel_spd[1] = ((-vx	+vy	+omega*L)/R * (30/Pi)) * RATIO;
 	set_wheel_spd[2] = ((-vx	-vy	+omega*L)/R * (30/Pi)) * RATIO;
 	set_wheel_spd[3] = ((+vx	-vy	+omega*L)/R * (30/Pi)) * RATIO;
 	for(int i=0; i<4; i++)
 	{
-		//注意，将来需要在电机确认上线后，才能PID调速
-		pid_calc(&pid_wheel_spd[i], moto_chassis[i].speed_rpm, set_wheel_spd[i]);
+		//在电机确认上线后，才能PID调速
+		if(moto_chassis[i].state == 1)
+		{
+			if(fabs(set_wheel_spd[i]-rt_wheel_spd[i])>WHEEL_DV)
+			{
+				rt_wheel_spd[i] += WHEEL_DV * (set_wheel_spd[i]>rt_wheel_spd[i] ? 1.0f:-1.0f);
+			}
+			else
+			{
+				rt_wheel_spd[i] = set_wheel_spd[i];
+			}
+			pid_calc(&pid_wheel_spd[i], moto_chassis[i].speed_rpm, rt_wheel_spd[i]);
+		}
+		else
+		{
+			pid_output_reset(&pid_wheel_spd[i]);
+		}
 	}
 	set_moto_1to4_current(my_hcan1->hcan, 
 						  pid_wheel_spd[0].pos_out, 
@@ -819,26 +891,14 @@ extern imu_t imu;
 void StartGetIMU(void *argument)
 {
   /* USER CODE BEGIN StartGetIMU */
-	int count = 0, init_temp_flag = 0;
   /* Infinite loop */
   for(;;)
   {
 	mpu_get_data();
 	imu_ahrs_update();
 	imu_attitude_update();
-	
-	//获取温度
-	if(init_temp_flag == 0)	
-	{
-		count++;
-		if(count >= 100)
-		{
-			set_imu_temp = imu.temp + 10;
-			init_temp_flag = 1;
-		}
-	}
-
-    osDelay(5);
+//	printf("%f,%f,%f\n",imu.pit, imu.yaw, imu.rol);
+    osDelay(1);
   }
   /* USER CODE END StartGetIMU */
 }
@@ -850,8 +910,8 @@ void StartGetIMU(void *argument)
 * @retval None
 */
 extern pid_t pid_imu_tmp;
-float set_imu_temp = 0.0f;
-int imu_temp_ctrl = 0;
+float set_imu_temp = 50.0f;
+int imu_temp_ctrl = 1;
 /* USER CODE END Header_StartCtrlIMUTemp */
 void StartCtrlIMUTemp(void *argument)
 {
@@ -863,10 +923,19 @@ void StartCtrlIMUTemp(void *argument)
   {
 	if(imu_temp_ctrl)
 	{
-		pid_calc(&pid_imu_tmp, imu.temp, set_imu_temp);
-		__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, pid_imu_tmp.pos_out);
+		if(imu.temp < set_imu_temp)
+		{
+			pid_calc(&pid_imu_tmp, imu.temp, set_imu_temp);
+			__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, pid_imu_tmp.pos_out);
+		}
+		else
+		{
+			pid_output_reset(&pid_imu_tmp);
+			__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2, 0);
+		}
+		//printf("%f\n",imu.temp);
 	}
-	osDelay(5);
+	osDelay(1);
   }
   /* USER CODE END StartCtrlIMUTemp */
 }
@@ -878,6 +947,12 @@ void StartCtrlIMUTemp(void *argument)
 * @retval None
 */
 extern Chassis_Motion chassis_motion;
+extern float brush_spd_from_host;
+extern uint8_t host_state;
+uint8_t debug_state = 0;
+extern float set_brush_spd[2];
+extern float fan_spd_from_host;
+extern uint32_t fan_spd;
 /* USER CODE END Header_StartChassisCtrl */
 void StartChassisCtrl(void *argument)
 {
@@ -885,11 +960,47 @@ void StartChassisCtrl(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	vx = chassis_motion.vx;
-	vy = chassis_motion.vy;
-	omega = chassis_motion.omega;
-	osDelay(10);
+	if(host_state == 1)	//主机上线
+	{
+		vx = chassis_motion.vx;
+		vy = chassis_motion.vy;
+		omega = chassis_motion.omega;
+		set_brush_spd[0] = brush_spd_from_host*RATIO;
+		set_brush_spd[1] = -brush_spd_from_host*RATIO;
+		if(fan_spd_from_host < 0.0f)
+		{
+			fan_spd = 0;
+		}
+		else if(fan_spd_from_host < 999.0f)
+		{
+			fan_spd = (uint32_t)fan_spd_from_host;
+		}
+		else
+		{
+			fan_spd = 999;
+		}
+//		fan_spd = (uint32_t)fan_spd_from_host;
 	}
+	else if(debug_state == 1)
+	{
+		vx = 0.0f;
+		vy = 0.0f;
+		omega = 0.0f;
+		set_brush_spd[0] = RATIO*120.0f;
+		set_brush_spd[1] = -RATIO*120.0f;
+		fan_spd = 799;
+	}
+	else
+	{
+		vx = 0.0f;
+		vy = 0.0f;
+		omega = 0.0f;
+		set_brush_spd[0] = 0.0f;
+		set_brush_spd[1] = 0.0f;
+		fan_spd = 0;
+	}
+	osDelay(10);
+  }
   /* USER CODE END StartChassisCtrl */
 }
 
@@ -899,26 +1010,47 @@ void StartChassisCtrl(void *argument)
 * @param argument: Not used
 * @retval None
 */
+#define BRUSH_DV 45.6f
+#define BRUSH_DDV 9.12f
 moto_measure_t moto_brush[2] = {0};
-float set_brush_spd[2] = {0.0f, 0.0f};
-extern float brush_spd_from_host;
+float set_brush_spd[2] = {19*2*60.0, -19*2*60.0};
+float rt_brush_spd[2] = {0, 0};
+
 /* USER CODE END Header_StartBrushCtrl */
 void StartBrushCtrl(void *argument)
 {
   /* USER CODE BEGIN StartBrushCtrl */
-  for(int i=0; i<2; i++)
-  {
-	PID_struct_init(&pid_brush_spd[i], POSITION_PID, 20000, 20000,
-								1.5f,	0.1f,	0.0f	);  //4 motos angular rate closeloop.
-  } 
+	PID_struct_init(&pid_brush_spd[0], POSITION_PID, 16000, 16000,
+								2.0f,	0.075f,	0.0f	); 
+	pid_brush_spd[0].integral_seperation = 1;
+	pid_brush_spd[0].integral_threshold = 500;
+	PID_struct_init(&pid_brush_spd[1], POSITION_PID, 16000, 16000,
+								3.5f,	0.32f,	0.0f	); 
+	pid_brush_spd[1].integral_seperation = 1;
+	pid_brush_spd[1].integral_threshold = 500;
   /* Infinite loop */
   for(;;)
   {
 	for(int i=0; i<2; i++)
 	{
-		set_brush_spd[i] = brush_spd_from_host;
-		pid_calc(&pid_brush_spd[i], moto_brush[i].speed_rpm, set_brush_spd[i]);
+		if(moto_brush[i].state == 1)
+		{
+			if(fabs(set_brush_spd[i]-rt_brush_spd[i])>BRUSH_DV)
+			{
+				rt_brush_spd[i] += BRUSH_DV * (set_brush_spd[i]>rt_brush_spd[i] ? 1.0f:-1.0f);
+			}
+			else
+			{
+				rt_brush_spd[i] = set_brush_spd[i];
+			}
+			pid_calc(&pid_brush_spd[i], moto_brush[i].speed_rpm_filtered, rt_brush_spd[i]);
+		}
+		else	//电机掉线
+		{
+			pid_output_reset(&pid_brush_spd[i]);
+		}
 	}
+	printf("%d,%f\n", moto_brush[0].speed_rpm_filtered, rt_brush_spd[0]);
 	set_moto_5to8_current(my_hcan1->hcan, 
 						  pid_brush_spd[0].pos_out, 
 						  pid_brush_spd[1].pos_out,
@@ -927,6 +1059,122 @@ void StartBrushCtrl(void *argument)
 	osDelay(10);
   }
   /* USER CODE END StartBrushCtrl */
+}
+
+/* USER CODE BEGIN Header_StartLED */
+/**
+* @brief Function implementing the myLED thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartLED */
+void StartLED(void *argument)
+{
+  /* USER CODE BEGIN StartLED */
+  /* Infinite loop */
+  for(;;)
+  {
+	  if(debug_state == 1)
+	  {
+		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(LED3_GPIO_Port,LED3_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(LED5_GPIO_Port,LED5_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(LED6_GPIO_Port,LED6_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(LED7_GPIO_Port,LED7_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(LED8_GPIO_Port,LED8_Pin, GPIO_PIN_RESET);
+	  }
+	  else
+	  {
+		  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(LED3_GPIO_Port,LED3_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(LED5_GPIO_Port,LED5_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(LED6_GPIO_Port,LED6_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(LED7_GPIO_Port,LED7_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(LED8_GPIO_Port,LED8_Pin, GPIO_PIN_SET);
+	  }
+    osDelay(1000);
+  }
+  /* USER CODE END StartLED */
+}
+
+/* USER CODE BEGIN Header_StartMtHrtBt */
+/**
+* @brief Function implementing the myMtHrtBt thread.
+* @param argument: Not used
+* @retval None
+*/
+extern uint32_t host_heartbeat;
+uint8_t host_state = 0;
+/* USER CODE END Header_StartMtHrtBt */
+void StartMtHrtBt(void *argument)
+{
+  /* USER CODE BEGIN StartMtHrtBt */
+  /* Infinite loop */
+  for(;;)
+  {
+	//底盘电机
+	for(int i = 0; i<4; i++)
+	{
+		if(moto_chassis[i].heartbeat > 0)
+		{
+			moto_chassis[i].state = 1;
+		}
+		else
+		{
+			moto_chassis[i].state = 0;
+		}
+		moto_chassis[i].heartbeat = 0;
+	}
+	//刷子电机
+	for(int i = 0; i<4; i++)
+	{
+		if(moto_brush[i].heartbeat > 0)
+		{
+			moto_brush[i].state = 1;
+		}
+		else
+		{
+			moto_brush[i].state = 0;
+		}
+		moto_brush[i].heartbeat = 0;
+	}
+	if(host_heartbeat > 0)
+	{
+		host_state = 1;
+	}
+	else
+	{
+		host_state = 0;
+	}
+	host_heartbeat = 0;
+    osDelay(500);
+  }
+  /* USER CODE END StartMtHrtBt */
+}
+
+/* USER CODE BEGIN Header_StartFanCtrl */
+/**
+* @brief Function implementing the myFanCtrl thread.
+* @param argument: Not used
+* @retval None
+*/
+uint32_t fan_spd = 0;
+/* USER CODE END Header_StartFanCtrl */
+void StartFanCtrl(void *argument)
+{
+  /* USER CODE BEGIN StartFanCtrl */
+  /* Infinite loop */
+  for(;;)
+  {
+	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, fan_spd);
+	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2, fan_spd);
+    osDelay(10);
+  }
+  /* USER CODE END StartFanCtrl */
 }
 
  /**

@@ -68,6 +68,8 @@ void Error_Handler(void);
 #define HEAT_PWM_GPIO_Port GPIOB
 #define T2GPS_Pin GPIO_PIN_14
 #define T2GPS_GPIO_Port GPIOG
+#define HEAT_Pin GPIO_PIN_4
+#define HEAT_GPIO_Port GPIOB
 #define R2GPS_Pin GPIO_PIN_9
 #define R2GPS_GPIO_Port GPIOG
 #define J20_Pin GPIO_PIN_2
@@ -76,14 +78,34 @@ void Error_Handler(void);
 #define J22_GPIO_Port GPIOH
 #define J19_Pin GPIO_PIN_4
 #define J19_GPIO_Port GPIOH
+#define LED8_Pin GPIO_PIN_8
+#define LED8_GPIO_Port GPIOG
 #define J21_Pin GPIO_PIN_5
 #define J21_GPIO_Port GPIOH
-#define HEAT_Pin GPIO_PIN_12
-#define HEAT_GPIO_Port GPIOD
-#define R2HOST_Pin GPIO_PIN_9
-#define R2HOST_GPIO_Port GPIOD
+#define LED7_Pin GPIO_PIN_7
+#define LED7_GPIO_Port GPIOG
+#define LED6_Pin GPIO_PIN_6
+#define LED6_GPIO_Port GPIOG
+#define NSS_Pin GPIO_PIN_6
+#define NSS_GPIO_Port GPIOF
+#define LED5_Pin GPIO_PIN_5
+#define LED5_GPIO_Port GPIOG
+#define LED4_Pin GPIO_PIN_4
+#define LED4_GPIO_Port GPIOG
+#define LED3_Pin GPIO_PIN_3
+#define LED3_GPIO_Port GPIOG
+#define LED2_Pin GPIO_PIN_2
+#define LED2_GPIO_Port GPIOG
+#define LED1_Pin GPIO_PIN_1
+#define LED1_GPIO_Port GPIOG
+#define FANB_Pin GPIO_PIN_13
+#define FANB_GPIO_Port GPIOD
+#define FANA_Pin GPIO_PIN_12
+#define FANA_GPIO_Port GPIOD
 #define T2HOST_Pin GPIO_PIN_8
-#define T2HOST_GPIO_Port GPIOD
+#define T2HOST_GPIO_Port GPIOE
+#define R2HOST_Pin GPIO_PIN_7
+#define R2HOST_GPIO_Port GPIOE
 /* USER CODE BEGIN Private defines */
 #define FREERTOS
 /* USER CODE END Private defines */

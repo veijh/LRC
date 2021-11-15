@@ -104,7 +104,6 @@ HAL_StatusTypeDef can_send_msg()
 	return HAL_OK;
 }
 
-float ZGyroModuleAngle;
 /*******************************************************************************************
   * @Func			void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef* _hcan)
   * @Brief    这是一个回调函数,都不用声明
@@ -128,8 +127,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)//CAN Receive
 				static u8 i;
 				i = my_hcan1->pRxMsg->StdId - CAN_3510Moto1_ID;
 				moto_chassis[i].msg_cnt++ <= 50	?	get_moto_offset(&moto_chassis[i], my_hcan1) : get_moto_measure(&moto_chassis[i], my_hcan1);
-				get_moto_measure(&moto_info, my_hcan1);
-				//get_moto_measure(&moto_chassis[i], _hcan);
+				moto_chassis[i].heartbeat++;	//电机上线
 			}
 			break;
 			case CAN_3510Moto5_ID:
@@ -138,7 +136,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)//CAN Receive
 				static u8 j;
 				j = my_hcan1->pRxMsg->StdId - CAN_3510Moto5_ID;
 				moto_brush[j].msg_cnt++ <= 50	?	get_moto_offset(&moto_brush[j], my_hcan1) : get_moto_measure(&moto_brush[j], my_hcan1);
-				get_moto_measure(&moto_info, my_hcan1);
+				moto_brush[j].heartbeat++;	//电机上线
 			}
 			break;
 		}
@@ -154,22 +152,15 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)//CAN Receive
  *******************************************************************************************/
 void get_moto_measure(moto_measure_t *ptr, My_CAN_HandleTypeDef *hcan)
 {
-//	u32  sum=0;
-//	u8	 i = FILTER_BUF_LEN;
-	
-	/*BUG!!! dont use this para code*/
-//	ptr->angle_buf[ptr->buf_idx] = (uint16_t)(hcan->pRxMsg->Data[0]<<8 | hcan->pRxMsg->Data[1]) ;
-//	ptr->buf_idx = ptr->buf_idx++ > FILTER_BUF_LEN ? 0 : ptr->buf_idx;
-//	while(i){
-//		sum += ptr->angle_buf[--i];
-//	}
-//	ptr->fited_angle = sum / FILTER_BUF_LEN;
 	ptr->last_angle = ptr->angle;
 	ptr->angle = (uint16_t)(hcan->RxData[0]<<8 | hcan->RxData[1]) ;
-	ptr->real_current  = (int16_t)(hcan->RxData[2]<<8 | hcan->RxData[3]);
-	ptr->speed_rpm = ptr->real_current;	//这里是因为两种电调对应位不一样的信息
-	ptr->given_current = (int16_t)(hcan->RxData[4]<<8 | hcan->RxData[5])/-5;
-	ptr->hall = hcan->RxData[6];
+	ptr->speed_rpm = (int16_t)(hcan->RxData[2]<<8 | hcan->RxData[3]);
+	ptr->spd_sum = ptr->spd_sum - ptr->spd_buf[ptr->spd_buf_idx] + (int32_t)ptr->speed_rpm;
+	ptr->speed_rpm_filtered = ptr->spd_sum / FILTER_BUF_LEN;
+	ptr->spd_buf[ptr->spd_buf_idx] = (int32_t)(ptr->speed_rpm);
+	ptr->spd_buf_idx = (ptr->spd_buf_idx +1) % FILTER_BUF_LEN;
+	ptr->given_current = (int16_t)(hcan->RxData[4]<<8 | hcan->RxData[5]);	//?
+	ptr->hall = hcan->RxData[6];	//温度
 	if(ptr->angle - ptr->last_angle > 4096)
 		ptr->round_cnt --;
 	else if (ptr->angle - ptr->last_angle < -4096)

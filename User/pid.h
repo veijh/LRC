@@ -56,6 +56,9 @@ typedef struct __pid_t
     
 	  float max_err;
 	  float deadband;				//err < deadband return
+	  float integral_threshold;		//积分分离阈值
+	  uint8_t integral_seperation;	//是否使用积分分离
+	  
     uint32_t pid_mode;
     uint32_t MaxOutput;				//输出限幅
     uint32_t IntegralLimit;		//积分限幅
@@ -82,7 +85,8 @@ void PID_struct_init(
     float 	kd);
     
 float pid_calc(pid_t* pid, float fdb, float ref);
-    
+void pid_output_reset(pid_t *pid);
+
 extern pid_t pid_rol;
 extern pid_t pid_pit;
 extern pid_t pid_yaw;

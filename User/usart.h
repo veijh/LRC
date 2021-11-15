@@ -28,6 +28,10 @@ extern uint16_t point1;
 extern GPS_Data save_data;
 extern uint8_t GpsTempChar;
 extern uint8_t HostTempChar;
+extern uint8_t DebugTempChar;
+extern uint32_t host_heartbeat;
+
+extern uint8_t debug_state;
 
 int fputc(int ch, FILE *f);
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);          	//串口1中断服务程序

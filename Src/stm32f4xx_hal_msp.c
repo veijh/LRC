@@ -326,14 +326,15 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* htim)
 
     __HAL_RCC_GPIOD_CLK_ENABLE();
     /**TIM4 GPIO Configuration
+    PD13     ------> TIM4_CH2
     PD12     ------> TIM4_CH1
     */
-    GPIO_InitStruct.Pin = HEAT_Pin;
+    GPIO_InitStruct.Pin = FANB_Pin|FANA_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
-    HAL_GPIO_Init(HEAT_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* USER CODE BEGIN TIM4_MspPostInit 1 */
 
@@ -396,7 +397,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     PE8     ------> UART7_TX
     PE7     ------> UART7_RX
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_7;
+    GPIO_InitStruct.Pin = T2HOST_Pin|R2HOST_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
@@ -450,7 +451,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     PD9     ------> USART3_RX
     PD8     ------> USART3_TX
     */
-    GPIO_InitStruct.Pin = R2HOST_Pin|T2HOST_Pin;
+    GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_8;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
@@ -514,7 +515,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     PE8     ------> UART7_TX
     PE7     ------> UART7_RX
     */
-    HAL_GPIO_DeInit(GPIOE, GPIO_PIN_8|GPIO_PIN_7);
+    HAL_GPIO_DeInit(GPIOE, T2HOST_Pin|R2HOST_Pin);
 
     /* UART7 interrupt DeInit */
     HAL_NVIC_DisableIRQ(UART7_IRQn);
@@ -554,7 +555,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     PD9     ------> USART3_RX
     PD8     ------> USART3_TX
     */
-    HAL_GPIO_DeInit(GPIOD, R2HOST_Pin|T2HOST_Pin);
+    HAL_GPIO_DeInit(GPIOD, GPIO_PIN_9|GPIO_PIN_8);
 
     /* USART3 interrupt DeInit */
     HAL_NVIC_DisableIRQ(USART3_IRQn);

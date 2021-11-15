@@ -73,6 +73,16 @@ static void pid_reset(pid_t	*pid, float kp, float ki, float kd)
     pid->d = kd;
 }
 
+/*清空输出*/
+void pid_output_reset(pid_t *pid)
+{
+	pid->pout = 0.0f;
+	pid->iout = 0.0f;
+	pid->dout = 0.0f;
+	pid->pos_out = 0.0f;
+	pid->last_pos_out = 0.0f;
+}
+
 /**
     *@bref. calculate delta PID and position PID
     *@param[in] set： target
@@ -82,7 +92,7 @@ float pid_calc(pid_t* pid, float get, float set){
     pid->get[NOW] = get;
     pid->set[NOW] = set;
     pid->err[NOW] = set - get;	//set - measure
-    if (pid->max_err != 0 && ABS(pid->err[NOW]) >  pid->max_err  )
+    if (pid->max_err != 0 && ABS(pid->err[NOW]) >  pid->max_err )
 		return 0;
 	if (pid->deadband != 0 && ABS(pid->err[NOW]) < pid->deadband)
 		return 0;
@@ -90,7 +100,10 @@ float pid_calc(pid_t* pid, float get, float set){
     if(pid->pid_mode == POSITION_PID) //位置式p
     {
         pid->pout = pid->p * pid->err[NOW];
-        pid->iout += pid->i * pid->err[NOW];
+		if(pid->integral_seperation != 1 || fabs(pid->err[NOW]) < pid->integral_threshold)	//积分分离
+		{
+			pid->iout += pid->i * pid->err[NOW];
+		}
         pid->dout = pid->d * (pid->err[NOW] - pid->err[LAST] );
         abs_limit(&(pid->iout), pid->IntegralLimit);
         pid->pos_out = pid->pout + pid->iout + pid->dout;
@@ -180,6 +193,14 @@ void PID_struct_init(
     /*init function pointer*/
     pid->f_param_init = pid_param_init;
     pid->f_pid_reset = pid_reset;
+	pid->pout = 0.0f;
+	pid->iout = 0.0f;
+	pid->dout = 0.0f;
+	pid->pos_out = 0.0f;
+	pid->last_pos_out = 0.0f;
+	pid->last_delta_out = 0.0f;
+	pid->delta_out = 0.0f;
+	pid->delta_u = 0.0f;
 //	pid->f_cal_pid = pid_calc;	
 //	pid->f_cal_sp_pid = pid_sp_calc;	//addition
 		

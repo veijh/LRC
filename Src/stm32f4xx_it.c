@@ -44,6 +44,7 @@
 /* USER CODE BEGIN PV */
 extern uint8_t GpsTempChar;
 extern uint8_t HostTempChar;
+extern uint8_t DebugTempChar;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -247,6 +248,7 @@ void UART8_IRQHandler(void)
   /* USER CODE END UART8_IRQn 0 */
   HAL_UART_IRQHandler(&huart8);
   /* USER CODE BEGIN UART8_IRQn 1 */
+  HAL_UART_Receive_IT(&huart8, &DebugTempChar, 1);
   /* USER CODE END UART8_IRQn 1 */
 }
 
